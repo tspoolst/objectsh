@@ -1,0 +1,536 @@
+#!/bin/ksh
+
+##a colloction of hash handling tools
+#[of]:hash
+#[of]:static methods
+function hash.staticconstructor {
+#[of]:  function hash.items {
+function hash.items {
+#[c]object [-n|-i] -|var
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  typeset i
+  if [[ "${FUNCNAME[1]#${o}.}" = "keys" ]] ; then
+    eval "i='isset ${ov}hash__meta_${d}{${mv}key}[3] || \
+      apush ${ov}hashkeys \${q}\${d}{${ov}hash__meta_${d}{${mv}key}[0]}\${q}'"
+  elif [[ "${FUNCNAME[1]#${o}.}" = "nodes" ]] ; then
+    eval "i='isset ${ov}hash__meta_\${d}{${mv}key}[3] && \
+      apush ${ov}hashkeys \${q}\${d}{${ov}hash__meta_${d}{${mv}key}[0]}\${q}'"
+  else
+    eval "i='apush ${ov}hashkeys \${q}\${d}{${ov}hash__meta_${d}{${mv}key}[0]}\${q}'"
+  fi
+  eval "
+    typeset ${mv}key ${ov}hashkeys=()
+
+    if [[ ${d}{${ov}hash__count} -gt 0 ]] ; then
+      ${mv}key=${q}${d}{${ov}hash__first}${q}
+      while isset ${ov}hash__meta_${d}{${mv}key}[2] ; do
+        eval ${q}
+          ${i}
+          ${mv}key=\${q}\${d}{${ov}hash__meta_${d}{${mv}key}[2]}\${q}
+        ${q}
+      done
+      eval ${q}${i}${q}
+    else
+      [[ ${q}${d}1${q} != ${q}-${q} ]] && unset ${d}1
+      return 1
+    fi
+
+    if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{${ov}hashkeys[@]}${q}
+    else
+      aset ${d}1 ${q}${d}{${ov}hashkeys[@]}${q}
+    fi
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.dump {
+function hash.dump {
+#[c]object
+#[c]dump entire hash to stdout
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  typeset i="'\\''"
+  eval "
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}dumpraw${q} ]] ; then
+      typeset hn=${ov}hash__
+    else
+      typeset hn
+    fi
+  "
+  eval "
+    typeset ${om}item 
+    
+    echo ${q}${hn}first='${d}{${ov}hash__first}'${q}
+    echo ${q}${hn}count='${d}{${ov}hash__count}'${q}
+
+    ${om}key=${q}${d}{${ov}hash__first}${q}
+    if [[ ${d}{${ov}hash__count:-0} -gt 0 ]] ; then
+      while isset ${ov}hash__meta_${d}{${om}key}[2] ; do
+        eval ${q}
+          echo \${q}${hn}data_${d}{${om}key}='\${d}{${ov}hash__data_${d}{${om}key}//\'/\\\${i}}'\${q}
+          echo \${q}${hn}meta_${d}{${om}key}[0]='\${d}{${ov}hash__meta_${d}{${om}key}[0]//\'/\\\${i}}'\${q}
+          isset ${ov}hash__meta_${d}{${om}key}[1] && echo \${q}${hn}meta_${d}{${om}key}[1]='\${d}{${ov}hash__meta_${d}{${om}key}[1]}'\${q}
+          isset ${ov}hash__meta_${d}{${om}key}[2] && echo \${q}${hn}meta_${d}{${om}key}[2]='\${d}{${ov}hash__meta_${d}{${om}key}[2]}'\${q}
+          isset ${ov}hash__meta_${d}{${om}key}[3] && echo \${q}${hn}meta_${d}{${om}key}[3]='\${d}{${ov}hash__meta_${d}{${om}key}[3]}'\${q}
+          ${om}key=\${q}\${d}{${ov}hash__meta_${d}{${om}key}[2]}\${q}
+        ${q}
+      done
+      eval ${q}
+        echo \${q}${hn}data_${d}{${om}key}='\${d}{${ov}hash__data_${d}{${om}key}//\'/\\\${i}}'\${q}
+        echo \${q}${hn}meta_${d}{${om}key}[0]='\${d}{${ov}hash__meta_${d}{${om}key}[0]//\'/\\\${i}}'\${q}
+        isset ${ov}hash__meta_${d}{${om}key}[1] && echo \${q}${hn}meta_${d}{${om}key}[1]='\${d}{${ov}hash__meta_${d}{${om}key}[1]}'\${q}
+        isset ${ov}hash__meta_${d}{${om}key}[2] && echo \${q}${hn}meta_${d}{${om}key}[2]='\${d}{${ov}hash__meta_${d}{${om}key}[2]}'\${q}
+        isset ${ov}hash__meta_${d}{${om}key}[3] && echo \${q}${hn}meta_${d}{${om}key}[3]='\${d}{${ov}hash__meta_${d}{${om}key}[3]}'\${q}
+      ${q}
+    fi
+
+    echo ${q}${hn}last='${d}{${ov}hash__last}'${q}
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.save {
+function hash.save {
+#[c]object filename
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    ##this checks write permissons and clears the hashtable file
+    if ! : > ${q}${d}1${q} >/dev/null 2>&1 ; then
+      echo ${q}the hash save file \${q}${d}1\${q} is not writeable${q} >&2
+      return 1
+    fi
+
+    ##dump entire hash to file
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}saveraw${q} ]] ; then
+      ${o}.dumpraw > ${q}${d}1${q}
+    else
+      ${o}.dump > ${q}${d}1${q}
+    fi
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.load {
+function hash.load {
+#[c]object filename
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset ${mv}key
+
+    ##do we have permission to read the hashtable file and does it have content?
+    if [[ ! -e ${q}${d}1${q} ]] ; then
+      echo ${q}the hashtable file \${q}${d}1\${q} does not exist${q} >&2
+      return 1
+    fi
+    if [[ ! -r ${q}${d}1${q} ]] ; then
+      echo ${q}the hashtable file \${q}${d}1\${q} is not readable${q} >&2
+      return 1
+    fi
+    if [[ ! -s ${q}${d}1${q} ]] ; then
+      echo ${q}the hashtable file \${q}${d}1\${q} has no content${q} >&2
+      return 1
+    fi
+
+    ##load entire hash from file
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}loadraw${q} ]] ; then
+      if ! grep -q -e ${q}${ov}hash__last=${q} ${q}${d}1${q} ; then
+        echo ${q}the hashtable file \${q}${d}1\${q} is incomplete, damaged, or does not match the object \${q}${o}\${q}${q} >&2
+        return 1
+      fi
+      . ${q}${d}1${q}
+    else
+      if ! grep -q -e ${q}^last=${q} ${q}${d}1${q} ; then
+        echo ${q}the hashtable file \${q}${d}1\${q} is incomplete or damaged${q} >&2
+        return 1
+      fi
+      while read -r ${mv}key ; do
+        eval ${ov}hash__${d}{${mv}key}
+      done < ${q}${d}1${q}
+    fi
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.setkey {
+function hash.setkey {
+#[c]object key [node/s] [+=|-=|=] value
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset ${mv}args ${mv}key ${mv}math ${mv}value ${mv}newnode
+    typeset ${mv}node=0
+    aset ${mv}args ${q}${d}@${q}
+    ashift ${mv}key ${mv}args || die 1 ${q}missing the key${q}
+#[of]:    convert2key
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}setkeylower${q} ]] ; then
+      ${c}.convert2key -l ${mv}key ${q}${d}{${mv}key}${q}
+    else
+      ${c}.convert2key ${mv}key ${q}${d}{${mv}key}${q}
+    fi
+#[cf]
+    apop ${mv}value ${mv}args || die 1 ${q}missing the value${q}
+    if isset ${mv}args ; then
+      if apop ${mv}math ${mv}args && [[ ${q}${d}{${mv}math}${q} != @(+=|-=|=) ]] ; then
+        if ! isfnset ${ov}_${d}{${mv}key} ; then
+          new hash ${ov}_${d}{${mv}key}
+          ${mv}node=1
+        fi
+        ${ov}_${d}{${mv}key}.setkey ${q}${d}{${mv}args[@]}${q} ${q}${d}{${mv}math}${q} ${q}${d}{${mv}value}${q}
+        unset ${mv}math
+      fi
+    fi
+    eval ${q}
+#[of]:      if first entry set first
+      [[ -z \${q}\${d}{${ov}hash__first}\${q} ]] && ${ov}hash__first=${d}{${mv}key}
+#[cf]
+#[of]:      if new entry set meta
+      if [[ -z \${q}\${d}{${ov}hash__meta_${d}{${mv}key}[0]}\${q} ]] ; then
+        ${ov}hash__meta_${d}{${mv}key}[0]=\${q}\${d}1\${q}
+        if [[ -n \${q}\${d}{${ov}hash__last}\${q} ]] ; then
+          eval \${q}\${ov}hash__meta_\${d}{${ov}hash__last}[2]=${d}{${mv}key}\${q}
+          ${ov}hash__meta_${d}{${mv}key}[1]=\${d}{${ov}hash__last}
+        fi
+        (( ${mv}node )) && ${ov}hash__meta_${d}{${mv}key}[3]=1
+        ${ov}hash__last=${d}{${mv}key}
+        ${ov}hash__count=\${q}\${d}{${ov}hash__count:-0}\${q}
+        let \${q}${ov}hash__count+=1\${q}
+      fi
+#[cf]
+    ${q}
+#[of]:    set key to value
+    if [[ -n ${q}${d}{${mv}math}${q} ]] ; then
+      let ${q}${ov}hash__data_${d}{${mv}key} ${d}{${mv}math} ${d}{${mv}value}${q}
+    else
+      eval ${q}${ov}hash__data_${d}{${mv}key}=\${q}\${d}{\${mv}value}\${q}${q}
+    fi
+#[cf]
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.getkey {
+function hash.getkey {
+#[c]object !|-|var key
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset ${mv}key
+ 
+#[of]:    convert2key
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}getkeylower${q} ]] ; then
+      ${c}.convert2key -l ${mv}key ${q}${d}2${q}
+    else
+      ${c}.convert2key ${mv}key ${q}${d}2${q}
+    fi
+#[cf]
+  
+    if [[ ${q}${d}1${q} = ${q}!${q} ]] ; then
+      :
+    elif [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+      eval ${q}echo \${q}\${d}{${ov}hash__data_${d}{${mv}key}}\${q}${q}
+    else
+      eval ${q}${d}1=\${q}\${d}{${ov}hash__data_${d}{${mv}key}}\${q}${q}
+    fi
+    isset ${q}${ov}hash__meta_${d}{${mv}key}${q}
+  "
+}
+#[cf]
+#[of]:  function hash.delkey {
+function hash.delkey {
+#[c]object key
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset ${mv}key
+ 
+#[of]:    convert2key
+    if [[ ${q}${d}{FUNCNAME[1]#${o}.}${q} = ${q}delkeylower${q} ]] ; then
+      ${c}.convert2key -l ${mv}key ${q}${d}1${q}
+    else
+      ${c}.convert2key ${mv}key ${q}${d}1${q}
+    fi
+#[cf]
+
+    isfnset ${ov}_${d}{${mv}key} && destroy ${ov}_${d}{${mv}key}
+
+    eval ${q}
+      if [[ -n \${q}\${d}{${ov}hash__meta_${d}{${mv}key}[0]}\${q} ]] ; then
+        if [[ \${q}\${d}{${ov}hash__first}\${q} = \${q}${d}{${mv}key}\${q} ]] ; then
+          ${ov}hash__first=\${d}{${ov}hash__meta_${d}{${mv}key}[2]}
+          eval \${q}unset \${ov}hash__meta_\${d}{${ov}hash__meta_${d}{${mv}key}[2]}[1]\${q}
+        elif [[ \${q}\${d}{${ov}hash__last}\${q} = \${q}${d}{${mv}key}\${q} ]] ; then
+          ${ov}hash__last=\${d}{${ov}hash__meta_${d}{${mv}key}[1]}
+          eval \${q}unset \${ov}hash__meta_\${d}{${ov}hash__meta_${d}{${mv}key}[1]}[2]\${q}
+        else
+          eval \${q}
+            \${ov}hash__meta_\${d}{${ov}hash__meta_${d}{${mv}key}[1]}[2]=\${d}{${ov}hash__meta_${d}{${mv}key}[2]}
+            \${ov}hash__meta_\${d}{${ov}hash__meta_${d}{${mv}key}[2]}[1]=\${d}{${ov}hash__meta_${d}{${mv}key}[1]}
+          \${q}
+        fi
+        unset ${ov}hash__meta_${d}{${mv}key}
+        unset ${ov}hash__data_${d}{${mv}key}
+        let \${q}${ov}hash__count-=1\${q}
+        if [[ \${d}{${ov}hash__count} -eq 0 ]] ; then
+          unset ${ov}hash__first
+          unset ${ov}hash__last
+          unset ${ov}hash__count
+        fi
+      else
+        return 1
+      fi
+    ${q}
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.getsize {
+function hash.getsize {
+#[c]object !|-|var
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    if [[ ${q}${d}1${q} = ${q}!${q} ]] ; then
+      :
+    elif [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{${ov}hash__count-0}${q}
+    else
+      eval ${q}${d}1=\${q}${d}{${ov}hash__count-0}\${q}${q}
+    fi
+    [[ ${d}{${ov}hash__count:-0} -eq 0 ]] && return 1
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hash.append {
+function hash.append {
+#[c]object {hash}
+#[of]:set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset ${mv}cursor ${mv}key
+    $1.newiterator ${mv}cursor
+    while ${mv}cursor.step ${mv}key ; do
+      ${o}.setkey ${q}${d}{${mv}key[@]}${q}
+    done
+    destroy ${mv}cursor
+  "
+}
+#[cf]
+#[of]:  function hash.newiterator {
+function hash.newiterator {
+#[c]object {newobject}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    new hashiterator $1 ${o}
+    apush ${ov}iterators $1
+  "
+}
+#[cf]
+}
+#[cf]
+#[of]:class methods
+function hash.classconstructor {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.convert2key {
+function ${c}.convert2key {
+#[c][var] value
+  typeset ${cv}string ${cv}char ${cv}hexpart ${cv}key
+  typeset ${cv}forcelower=false
+  if [[ ${q}${d}1${q} = ${q}-l${q} ]] ; then
+    ${cv}forcelower=true
+    shift
+  fi
+  ${cv}string=${q}${d}{2-${d}1}${q}
+  if [[ -z ${q}${d}{${cv}string}${q} ]] ; then
+    echo ${q}hash error, attempted to create an empty key.${q}
+    exit 1
+  fi
+  if { ! ${d}{${cv}forcelower} && [[ ${q}${d}{${cv}string}${q} = +([[:alnum:]]) ]]; } || [[ ${q}${d}{${cv}string}${q} = +([[:lower:]]) ]] ; then
+    ${cv}key=${q}${d}{${cv}string}${q}
+  else
+    while [[ ${d}{#${cv}string} -gt 0 ]] ; do
+      ${cv}char=${q}${d}{${cv}string%${q}${d}{${cv}string#?}${q}}${q}
+      if [[ ${q}${d}{${cv}char}${q} = [[:alnum:]] ]] ; then
+        if ${d}{${cv}forcelower} && [[ ${q}${d}{${cv}char}${q} = [[:upper:]] ]] ; then
+          printf -v ${cv}char %o ${d}((36#${d}{${cv}char}+87))
+          ${cv}key=${q}${d}{${cv}key}${d}(echo -ne ${q}\\\\${d}{${cv}char}${q})${q}
+        else
+          ${cv}key=${q}${d}{${cv}key}${d}{${cv}char}${q}
+        fi
+      else
+        printf -v ${cv}hexpart %02X ${q}'${d}{${cv}char}${q}
+        ${cv}key=${q}${d}{${cv}key}${d}{${cv}hexpart}${q}
+      fi
+      ${cv}string=${q}${d}{${cv}string#?}${q}
+    done
+  fi
+  if [[ ${d}# -eq 1 ]] ; then
+    echo ${q}${d}{${cv}key}${q}
+  else
+    eval ${q}${d}1=\${q}\${d}{${cv}key}\${q}${q}
+  fi
+  return 0
+}
+#[cf]
+  "
+}
+#[cf]
+#[of]:dynamic methods
+function hash.constructor {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    function ${o}.keys {
+function ${o}.keys {
+#[c]object args...
+  ${c}.items ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.nodes {
+function ${o}.nodes {
+#[c]object args...
+  ${c}.items ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.dumpraw {
+function ${o}.dumpraw {
+#[c]object args...
+  ${c}.dump ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.saveraw {
+function ${o}.saveraw {
+#[c]object args...
+  ${c}.save ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.loadraw {
+function ${o}.loadraw {
+#[c]object args...
+  ${c}.load ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.setkeylower {
+function ${o}.setkeylower {
+#[c]object args...
+  ${c}.setkey ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.getkeylower {
+function ${o}.getkeylower {
+#[c]object args...
+  ${c}.getkey ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.delkeylower {
+function ${o}.delkeylower {
+#[c]object args...
+  ${c}.delkey ${o} ${q}${d}@${q}
+}
+#[cf]
+#[of]:    function ${o}.destructor {
+    function ${o}.destructor {
+      unset ${d}{!${ov}hash__*}
+      typeset _iterator
+      for _iterator in ${d}{${ov}iterators[@]} ; do
+        isfnset ${d}{_iterator} && destroy ${d}{_iterator}
+      done
+    }
+#[cf]
+#[of]:    object data
+newvar ${ov}iterators
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:hashiterator
+#[of]:static methods
+function hashiterator.staticconstructor {
+#[of]:  function hashiterator.reset {
+function hashiterator.reset {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "typeset _aggregate=${d}{${ov}hash}"
+  eval "
+    ${ov}reset=1
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hashiterator.step {
+function hashiterator.step {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset _aggregate=${d}{${ov}hash}
+    typeset _key=${q}${d}{${ov}key}${q}
+  "
+  eval "
+    ${_aggregate}.getsize ! || return 1
+    if (( ${ov}reset )) ; then
+      ${ov}key=${q}${d}{${_aggregate}_ov_hash__first}${q}
+      ${ov}reset=0
+    else
+      isset ${_aggregate}_ov_hash__meta_${_key}[2] || return 1
+      ${ov}key=${q}${d}{${_aggregate}_ov_hash__meta_${_key}[2]}${q}
+    fi
+    [[ -n ${q}$1${q} ]] && ${o}.currentitem ${q}$1${q}
+    return 0
+  "
+}
+#[cf]
+#[of]:  function hashiterator.currentitem {
+function hashiterator.currentitem {
+#[c]object [-|var]
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset _aggregate=${d}{${ov}hash}
+    typeset _key=${q}${d}{${ov}key}${q}
+  "
+  if [[ "$1" = "-" ]] ; then
+    eval "echo ${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q}"
+  else
+    eval "$1=(${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q} ${q}${d}{${_aggregate}_ov_hash__data_${_key}}${q})"
+  fi
+}
+#[cf]
+}
+#[cf]
+#[of]:dynamic methods
+function hashiterator.constructor {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    object data
+[[ $# -ne 1 ]] && die 1 ${q}a ${c} iterator can not be created directly${q}
+
+newvar ${ov}hash ${ov}reset ${ov}key
+
+${ov}hash=$1
+${ov}key=${q}${d}{${1}_ov_hash__first}${q}
+${ov}reset=1
+#[cf]
+  "
+}
+#[cf]
+#[cf]

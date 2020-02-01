@@ -1,0 +1,136 @@
+#!/bin/ksh
+##a colloction of hash handling tools
+
+#echo making static ${c} functions
+#[of]:static methods
+function hash.staticconstructor {
+#[of]:  function bpkg.template {
+function bpkg.template {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    return 0
+  "
+}
+#[cf]
+}
+#[cf]
+#[of]:class methods
+function hash.classconstructor {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.displayindex {
+function ${c}.displayindex {
+    typeset _pkg
+    ${cv}pkgindex.newiterator ${cv}pkgindexiterator
+    while ${cv}pkgindexiterator.step _pkg ; do
+      echo ${d}{_pkg[@]}
+    done
+    destroy ${cv}pkgindexiterator
+}
+#[cf]
+#[of]:    class data
+    new referenceid ${cv}id
+    new hash ${cv}pkgindex
+#[cf]
+  "
+}
+#[cf]
+#[of]:dynamic methods
+function hash.constructor {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    function ${o} {
+  function ${o} {
+    typeset ${ov}call=${d}1
+    shift 1
+    if [[ -n ${q}${d}{${ov}call}${q} ]] ; then
+      case ${q}${d}{${ov}call}${q} in
+        ==)
+          ${ov}call=${q}${o}.literalequal${q}
+          ;;
+      esac
+      if eval 'type -t ${d}{${ov}call} > /dev/null' ; then
+        eval '${d}{${ov}call} ${q}${d}@${q}'
+      else
+        echo ${q}requested function ${d}{${ov}call} does not exist${q}
+        exit 1
+      fi
+      return ${d}?
+    else
+      echo a defined ${q}function call must be used${q}
+      return 1
+    fi 
+  }
+#[cf]
+#[of]:    function ${o}.destructor {
+    function ${o}.destructor {
+      ${cv}id.delid ${d}{${ov}id}
+      ${cv}pkgindex.delkey ${d}{${ov}pkgname}
+    }
+#[cf]
+#[of]:    object data
+#[of]:usage
+      if [[ -z ${q}${d}1${q} ]] ; then
+        echo ${q}a ${c} object must be set at creation${q}
+        exit 1 
+      fi
+      if ! isset gl_basebuilddir ; then
+        echo ${q}a ${c} object requires that gl_basebuilddir has been set${q}
+        exit 1 
+      fi
+#[cf]
+typeset i
+newvar ${ov}builddir ${ov}decompdir ${ov}diffdir ${ov}id
+newvar ${ov}bindir ${ov}pkgdir
+newvar ${ov}mntdir ${ov}pkgname ${ov}srcdir ${ov}srcfilesdir
+newvar ${ov}envmounted ${ov}envinitialized
+
+${ov}pkgname=${q}${d}1${q}
+${cv}pkgindex.getkey ! ${d}{${ov}pkgname} && \
+  die 1 ${q}${d}{${ov}pkgname} has already been created${q}
+${cv}pkgindex.setkey ${d}{${ov}pkgname} ${d}{${om}objectname}
+
+${cv}id.getid ${ov}id
+
+for i in cdeps ideps rdeps excludes srcpkgs patches mounts imounts ; do
+  new hash ${ov}${d}{i}
+done
+#[of]:setup build paths
+      ${ov}builddir=${d}{gl_basebuilddir}/build/${d}{${ov}id}
+
+      ##dst dir for decompressing file prior to being moved to builddir
+      ${ov}decompdir=${d}{${ov}builddir}/decomp
+
+      ##encap packaged files go here
+      ${ov}bindir=${d}{${ov}builddir}/bin
+      ${ov}pkgdir=${d}{${ov}bindir}/${d}{${ov}pkgname}
+
+      ##dst dir for storing files created from built src
+      ${ov}diffdir=${d}{${ov}builddir}/diff
+
+      ##pkg construction begins here -- mount point for all build operations
+      ${ov}mntdir=${d}{${ov}builddir}/mnt
+
+      ##src and infopkg files go here
+      ${ov}srcdir=${d}{${ov}builddir}/src
+
+      ##srcfiles to get compiled for pkg go here
+      ${ov}srcfilesdir=${d}{${ov}srcdir}/srcfiles
+#[cf]
+#[cf]
+  "
+}
+#[cf]

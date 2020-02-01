@@ -1,0 +1,306 @@
+#!/bin/ksh
+
+##a colloction of list handling tools
+#[of]:list
+#[of]:static methods
+function list.staticconstructor {
+#[of]:  function list.set {
+function list.set {
+#[c]object val [val...val...]
+  eval "
+    shift
+    $1=(\"\$@\")
+  "
+}
+#[cf]
+#[of]:  function list.sort {
+function list.sort {
+#[c]object [-|array]
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset _array _tmp _size _index
+#[of]:    bubble sort
+    _array=(${q}${d}{${o}[@]}${q})
+    _size=${d}{#_array[@]}
+    ((_size--))
+    while [[ ${d}{_size} -gt 0 ]] ; do
+      _index=0    
+      while [[ ${d}{_index} -lt ${d}{_size} ]] ; do
+        if [[ ${q}${d}{_array[${d}{_index}]}${q} > ${q}${d}{_array[${d}((_index+1))]}${q} ]] ; then
+          _tmp=${q}${d}{_array[${d}((_index+1))]}${q}
+          _array[${d}((_index+1))]=${q}${d}{_array[${d}{_index}]}${q}
+          _array[${d}{_index}]=${q}${d}{_tmp}${q}
+        fi
+        ((_index++))
+      done
+      ((_size--))
+    done
+#[cf]
+    if [[ $# -eq 0 ]] ; then
+      ${o}=(${q}${d}{_array[@]}${q})
+    elif [[ ${q}$1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{_array[@]}${q}
+    else
+      eval ${q}${d}1=(\${q}\${d}{_array[@]}\${q})${q}
+    fi
+    return 0
+  "
+}
+#[cf]
+#[of]:  function list.split {
+function list.split {
+#[c]object {delimiter} {string}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  if [[ -z "$1" ]] ; then
+    shift
+    typeset _string="$*"
+    while [[ ${#_string} -gt 0 ]] ; do
+      typeset _array[${#_array[@]}]="${_string%"${_string#?}"}"
+      _string="${_string#?}"
+    done
+    eval "${o}.set ${q}${d}{_array[@]}${q}"
+  else
+    eval "
+      shift
+      typeset IFS=${q}$1${q}
+      if [[ ${q}${d}{*%$1}${q} = ${q}${d}*${q} ]] ; then
+        ${o}.set ${d}@
+      else
+        ${o}.set ${d}@ ${q}${q}
+      fi
+    "
+  fi
+}
+#[cf]
+#[of]:  function list.spliteval {
+function list.spliteval {
+#[c]object {delimiter} {string}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    shift
+    typeset _array _char
+    typeset _lit=false
+    typeset _index=0
+    typeset _string=${q}${d}*${q}
+
+    while [[ ${d}{#_string} -gt 0 ]] ; do
+      _char=${q}${d}{_string%${q}${d}{_string#?}${q}}${q}
+      _string=${q}${d}{_string#?}${q}
+      if [[ ${q}${d}{_char}${q} = '\' ]] ; then
+        _lit=true
+        continue
+      elif ! ${d}{_lit} && [[ ${q}${d}{_char}${q} = ${q}$1${q} ]] ; then
+        _array[${d}{_index}]=${q}${d}{_entry}${q}
+        unset _entry
+        let ${q}_index++${q}
+        continue
+      fi
+      _lit=false
+      typeset _entry=${q}${d}{_entry}${d}{_char}${q}
+    done
+    _array[${d}{_index}]=${q}${d}{_entry}${q}
+
+    ${o}.set ${q}${d}{_array[@]}${q}
+  "
+}
+#[cf]
+#[of]:  function list.join {
+function list.join {
+#[c]object {delimiter} {-|var}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  typeset IFS="$1"
+  if [[ "$2" = "-" ]] ; then
+    eval "echo ${q}${d}{${o}[*]}${q}"
+  else
+    eval "$2=${q}${d}{${o}[*]}${q}"
+  fi
+}
+#[cf]
+#[of]:  function list.push {
+function list.push {
+#[c]object val [val...val...]
+  eval "
+    shift
+    $1.set \"\${$1[@]}\" \"\$@\"
+  "
+}
+#[cf]
+#[of]:  function list.pop {
+function list.pop {
+#[c]object {!|-|var}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    [[ ${d}{#${o}[@]} -gt 0 ]] || return 1
+
+    if [[ ${q}$1${q} = ${q}!${q} ]] ; then
+      :
+    elif [[ ${q}$1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{${o}[${d}((${d}{#${o}[@]} -1))]}${q}
+    else
+      $1=${q}${d}{${o}[${d}((${d}{#${o}[@]} -1))]}${q}
+    fi
+    unset ${o}[${d}((${d}{#${o}[@]} -1))]
+  "
+  return 0
+}
+#[cf]
+#[of]:  function list.unshift {
+function list.unshift {
+#[c]object val [val...val...]
+  eval "
+    shift
+    $1.set \"\$@\" \"\${$1[@]}\"
+  "
+}
+#[cf]
+#[of]:  function list.shift {
+function list.shift {
+#[c]object {!|-|var}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    set -- ${q}${d}{${o}[@]}${q}
+    [[ ${d}# -gt 0 ]] || return 1
+
+    if [[ ${q}$1${q} = ${q}!${q} ]] ; then
+      :
+    elif [[ ${q}$1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{${o}}${q}
+    else
+      $1=${q}${d}{${o}}${q}
+    fi
+    shift
+    ${o}.set ${q}${d}@${q}
+  "
+  return 0
+}
+#[cf]
+#[of]:  function list.getsize {
+function list.getsize {
+#[c]object !|-|var
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    if [[ ${q}${d}1${q} = ${q}!${q} ]] ; then
+      :
+    elif [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+      echo ${q}${d}{#${o}[@]}${q}
+    else
+      eval ${q}${d}1=\${q}${d}{#${o}[@]}\${q}${q}
+    fi
+    [[ ${d}{#${o}[@]} -eq 0 ]] && return 1
+    return 0
+  "
+}
+#[cf]
+#[of]:  function list.newiterator {
+function list.newiterator {
+#[c]object {newobject}
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    new listiterator $1 ${o}
+    apush ${ov}iterators $1
+  "
+}
+#[cf]
+}
+#[cf]
+#[of]:dynamic methods
+function list.constructor {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    function ${o}.destructor {
+    function ${o}.destructor {
+      typeset _iterator
+      for _iterator in ${d}{${ov}iterators[@]} ; do
+        isfnset ${d}{_iterator} && destroy ${d}{_iterator}
+      done
+    }
+#[cf]
+#[of]:    object data
+unset ${o}
+newvar ${ov}iterators
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:listiterator
+#[of]:static methods
+function listiterator.staticconstructor {
+#[of]:  function listiterator.reset {
+function listiterator.reset {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "typeset _aggregate=${d}{${ov}list}"
+  eval "
+    ${ov}reset=1
+    return 0
+  "
+}
+#[cf]
+#[of]:  function listiterator.step {
+function listiterator.step {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "typeset _aggregate=${d}{${ov}list}"
+  eval "
+    ${_aggregate}.getsize ! || return 1
+    if (( ${ov}reset )) ; then
+      ${ov}index=0
+      ${_aggregate}.getsize ${ov}size
+      ${ov}reset=0
+    else
+      [[ ${d}((${ov}index+1)) -lt ${d}{${ov}size} ]] || return 1
+      ((${ov}index++))
+    fi
+    [[ -n ${q}$1${q} ]] && ${o}.currentitem ${q}$1${q}
+    return 0
+  "
+}
+#[cf]
+#[of]:  function listiterator.currentitem {
+function listiterator.currentitem {
+#[c]object [-|var]
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "typeset _aggregate=${d}{${ov}list}"
+  if [[ "$1" = "-" ]] ; then
+    eval "echo ${d}{${_aggregate}[${d}{${ov}index}]}"
+  else
+    eval "$1=${d}{${_aggregate}[${d}{${ov}index}]}"
+  fi
+}
+#[cf]
+}
+#[cf]
+#[of]:dynamic methods
+function listiterator.constructor {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    object data
+[[ $# -ne 1 ]] && die 1 ${q}a ${c} iterator can not be created directly${q}
+
+newvar ${ov}list ${ov}reset ${ov}index ${ov}size
+
+${ov}list=$1
+${ov}reset=1
+#[cf]
+  "
+}
+#[cf]
+#[cf]

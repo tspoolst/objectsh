@@ -1,0 +1,56 @@
+#!/bin/ksh
+
+#[of]:static methods
+#[of]:function referenceid.staticconstructor {
+function referenceid.staticconstructor {
+#[of]:  function referenceid.getid {
+function referenceid.getid {
+#[c]object var
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    if isset ${ov}stack ; then
+      apop $1 ${ov}stack
+    else
+      $1=${d}((++${ov}index))
+    fi
+    return 0
+  "
+}
+#[cf]
+#[of]:  function referenceid.delid {
+function referenceid.delid {
+#[c]object id
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    if [[ $1 -eq ${d}{${ov}index} ]] ; then
+      ((${ov}index--))
+    else
+      apush ${ov}stack $1
+    fi
+    return 0
+  "
+}
+#[cf]
+}
+#[cf]
+#[cf]
+#[of]:dynamic methods
+#[of]:function referenceid.constructor {
+function referenceid.constructor {
+#[c]object
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  #echo constructing object ${o} of class ${c}
+  eval "
+#[of]:    object data
+    newvar ${ov}index ${ov}stack
+    
+    ${ov}index=0
+    unset ${ov}stack
+#[cf]
+  "
+}
+#[cf]
+#[cf]

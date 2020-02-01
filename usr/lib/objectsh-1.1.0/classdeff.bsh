@@ -1,0 +1,254 @@
+#!/bin/bash
+
+#[of]:description
+#[c]a class is composed of
+#[c]class
+#[c]  constructor
+#[c]  variables
+#[c]  methods
+#[c]  objects
+#[c]    variables
+#[c]    methods
+#[c]  destructior
+#[c]  
+#[c]when a class is declared it needs to
+#[c]  initialize the object count to 0
+#[c]  define base class methods
+#[c]    class
+#[c]    class.new
+#[c]    class.size
+#[cf]
+#[of]:setup globals
+gl_classpath=${gl_objectshbase}/common
+#[cf]
+#[of]:functions
+#[of]:base
+shopt -s extglob
+#[l]:string:common/base/string-2.0.1.sh
+. ${gl_classpath}/base/string-2.0.1.sh
+#[l]:array:common/base/array-2.0.0.sh
+. ${gl_classpath}/base/array-2.0.0.sh
+#[l]:hash:common/base/hash-2.1.0.sh
+. ${gl_classpath}/base/hash-2.1.0.sh
+#[l]:test:common/base/test-2.2.0.sh
+. ${gl_classpath}/base/test-2.2.0.sh
+#[l]:file:common/base/file-3.1.0.sh
+. ${gl_classpath}/base/file-3.1.0.sh
+#[l]:die:common/base/die-2.0.0.sh
+. ${gl_classpath}/base/die-2.0.0.sh
+#[l]:errorlevel:common/base/errorlevel-0.1.0.sh
+. ${gl_classpath}/base/errorlevel-0.1.0.sh
+#[l]:msgdbg:common/base/msgdbg-2.0.1.sh
+. ${gl_classpath}/base/msgdbg-2.0.1.sh
+#[cf]
+#[of]:function include {
+function include {
+  typeset _include
+  _include="${1%.sclass}"
+  isfnset ${_include}.constructor && return 0
+  if [[ -n "${_include##*/*}" ]] ; then
+    . "${gl_objectshbase%/}/sclass/${_include}.sclass"
+  else
+    . ${_include}.sclass
+  fi
+}
+#[cf]
+#[of]:function destroy {
+function destroy {
+  [[ -z "$1" ]] && return 1
+  while [[ -n "$1" ]] ; do
+#[of]:    set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+    #echo destroying ${o}
+    hashdelkey ${cm}index ${o}
+    ${c}.destructor ${o}
+  done
+}
+#[cf]
+#[of]:function new {
+function new {
+#[c]classname objectname
+  typeset c o
+  c=$1
+  o=$2
+#[of]:  error if object is already defined
+  if isfnset "${o}" ; then
+    echo "error an object named ${o} already exist"
+    exit 1
+  fi
+#[cf]
+#[of]:  error if no constructor
+  if ! isfnset "${c}.constructor" ; then
+    echo "creation of object \"${o}\" failed, no class type of \"${c}\" has been defined"
+    exit 1
+  fi
+#[cf]
+#[of]:  create object
+#echo creating ${o}
+#[of]:clean object environment
+#eval "unset ${o} \${!${o}_om_*} \${!${o}_ov_*}"
+#[cf]
+#[of]:register object with parent
+if isset om && [[ "${m}" != "classconstructor" ]] ; then
+  hashsetkey ${om}children ${o} ""
+  eval "${o}_om_objectparent=${om%_om_}"
+fi
+#[cf]
+#[of]:save objectclass into object
+  eval "${o}_om_objectclass=${c}"
+#[cf]
+#[of]:set common environment
+shift
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+#[of]:save objectsname into object
+  eval "${om}objectname=${o}"
+#[cf]
+#[of]:define meta if first object
+if isset ${cm}methods ; then
+#[of]:  create object
+#[of]:  construct static methods
+  isfnset ${c}.staticconstructor && ${c}.staticconstructor ${o}
+#[cf]
+#[of]:  construct dynamic methods
+  ${c}.constructor ${o} "${@}"
+#[of]:  ${o}
+  if ! isfnset "${o}" ; then
+    eval "
+      function ${o} {
+        die 1 ${q}the object \\${q}${o}\\${q} of class \\${q}${c}\\${q} does not support operator calls${q}
+      }
+    "
+  fi
+#[cf]
+#[cf]
+#[cf]
+else
+#[of]:  create object + meta
+#[of]:  construct static methods
+if isfnset ${c}.staticconstructor ; then
+#[c]  a dynamic function that creates a dynamic function that creates object functions/aliases
+  ${c}.staticconstructor
+  typeset i f
+  f="function ${c}.staticconstructor {
+  eval \"
+"
+  while read i ; do
+    i="${i##* }"
+    [[ "${i}" = ${c}.@(|static|class)constructor ]] && continue
+    if [[ -z "${i##${c}.*}" ]] ; then
+      f="${f}    function \${o}.${i##*.} {
+      ${i} \${o} \${q}\${d}@\${q}
+    }
+"
+    fi
+  done < <(typeset -F)
+  f="${f}
+  \"
+}"
+  eval "${f}"
+  ${c}.staticconstructor ${o}
+fi
+#[cf]
+#[of]:  construct class methods
+if isfnset ${c}.classconstructor ; then
+  ${c}.classconstructor ${o}
+  unset -f ${c}.classconstructor
+fi
+#[cf]
+#[of]:  construct default class methods
+#[of]:${c}.objectcount
+    if ! isfnset "${c}.objectcount" ; then
+      eval "
+        function ${c}.objectcount {
+#[c]          [!|-|var]
+          hashgetsize ${d}{1:--} ${cm}index
+        }
+      "
+    fi
+#[cf]
+#[of]:${c}.objectlist
+    if ! isfnset "${c}.objectlist" ; then
+      eval "
+        function ${c}.objectlist {
+#[c]          [!|-|var]
+          hashkeys ${d}{1:--} ${cm}index
+        }
+      "
+    fi
+#[cf]
+#[of]:${c}.destructor
+    if ! isfnset "${c}.destructor" ; then
+      eval "
+        function ${c}.destructor {
+#[c]          object
+#[l]:          classcommonenv.sh:common/classcommonenv.sh
+          . ${d}{gl_classpath}/classcommonenv.sh
+          #echo destructing object ${d}{o} of class ${d}{c}
+          eval ${q}
+            typeset i
+#[of]:            recursively call child destructors
+    destroy \${d}(hashkeys - \${om}children)
+#[cf]
+#[of]:            call object destructor
+            isfnset \${o}.destructor && \${o}.destructor
+#[cf]
+#[of]:            destroy object functions
+    isset \${om}objectparent && hashdelkey \${d}{\${om}objectparent}_om_children \${o}
+    unset -f \${o} \${d}{\${cm}methods[@]/#/\${o}.}
+#[cf]
+#[of]:            destroy object vars
+    #unset \${o} \${d}{!\${om}*} \${d}{!\${ov}*}
+    unset \${o}
+    unset \${d}{\${om}variables[@]} \${om}variables
+    unset \${om}objectclass \${om}objectname \${om}objectparent
+#[cf]
+          ${q}
+        }
+      "
+    fi
+#[cf]
+#[cf]
+#[of]:  construct dynamic methods
+  ${c}.constructor ${o} "${@}"
+#[of]:  ${o}
+  if ! isfnset "${o}" ; then
+    eval "
+      function ${o} {
+        die 1 ${q}the object \\${q}${o}\\${q} of class \\${q}${c}\\${q} does not support operator calls${q}
+      }
+    "
+  fi
+#[cf]
+  typeset i
+  while read i ; do
+    i="${i##* }"
+    if [[ -z "${i##${o}.*}" ]] ; then
+      apush ${cm}methods ${i##*.}
+    fi
+  done < <(typeset -F)
+#[cf]
+#[cf]
+fi
+#[cf]
+#[cf]
+#[of]:  save objectname into list
+  ##save objectname into class object list
+  hashsetkey ${cm}index ${o} ""
+#[cf]
+}
+#[cf]
+#[of]:function newvar {
+function newvar {
+  isset om || die 1 "newvar must be called within a method"
+  typeset i
+  for i ; do
+    unset ${i}
+    apush ${om}variables ${i}
+  done
+}
+#[cf]
+#[cf]
