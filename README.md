@@ -1,2 +1,2 @@
 # objectsh
-a bash shell library to simulate objects like in C++
+a bash shell script library to simulate object oriented languages like in C++/Java/etc...

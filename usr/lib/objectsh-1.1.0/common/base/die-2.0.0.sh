@@ -21,6 +21,7 @@ function die {
       shift
     fi
     lc_die_message="$1"
+    errorlevel ${lc_die_return:-1}
     msgdbg 0 "${lc_die_message:-no reason was given}"
     exit ${lc_die_return:-1}
   }

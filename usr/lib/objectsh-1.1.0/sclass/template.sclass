@@ -1,11 +1,11 @@
 #!/bin/ksh
-##a colloction of hash handling tools
+##description: i.e. a colloction of __ handling tools
 
 #echo making static ${c} functions
 #[of]:static methods
-function hash.staticconstructor {
-#[of]:  function bpkg.template {
-function bpkg.template {
+function template.staticconstructor {
+#[of]:  function template.exampleStaticMethod1 {
+function template.exampleStaticMethod1 {
 #[c]object -|var
 #[of]:  set common environment
 #[l]:classcommonenv.sh:../common/classcommonenv.sh
@@ -19,7 +19,7 @@ function bpkg.template {
 }
 #[cf]
 #[of]:class methods
-function hash.classconstructor {
+function template.classconstructor {
 #[c]object
 #[of]:  set common environment
 #[l]:classcommonenv.sh:../common/classcommonenv.sh
@@ -38,31 +38,32 @@ function ${c}.displayindex {
 #[cf]
 #[of]:    class data
     new referenceid ${cv}id
-    new hash ${cv}pkgindex
+    new object ${cv}pkgindex
 #[cf]
   "
 }
 #[cf]
 #[of]:dynamic methods
-function hash.constructor {
+function template.constructor {
 #[c]object
 #[of]:  set common environment
 #[l]:classcommonenv.sh:../common/classcommonenv.sh
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
+  ###
   #echo constructing object ${o} of class ${c}
   eval "
 #[of]:    function ${o} {
   function ${o} {
-    typeset ${ov}call=${d}1
+    typeset ${ov}call=${q}${d}1${q}
     shift 1
     if [[ -n ${q}${d}{${ov}call}${q} ]] ; then
       case ${q}${d}{${ov}call}${q} in
-        ==)
+        =)
           ${ov}call=${q}${o}.literalequal${q}
           ;;
       esac
-      if eval 'type -t ${d}{${ov}call} > /dev/null' ; then
+      if eval 'type -t ${q}${d}{${ov}call}${q} > /dev/null' ; then
         eval '${d}{${ov}call} ${q}${d}@${q}'
       else
         echo ${q}requested function ${d}{${ov}call} does not exist${q}
@@ -77,6 +78,7 @@ function hash.constructor {
 #[cf]
 #[of]:    function ${o}.destructor {
     function ${o}.destructor {
+      ###setting an object_destructor overrides the default object_destructor
       ${cv}id.delid ${d}{${ov}id}
       ${cv}pkgindex.delkey ${d}{${ov}pkgname}
     }
@@ -106,7 +108,7 @@ ${cv}pkgindex.setkey ${d}{${ov}pkgname} ${d}{${om}objectname}
 ${cv}id.getid ${ov}id
 
 for i in cdeps ideps rdeps excludes srcpkgs patches mounts imounts ; do
-  new hash ${ov}${d}{i}
+  new object ${ov}${d}{i}
 done
 #[of]:setup build paths
       ${ov}builddir=${d}{gl_basebuilddir}/build/${d}{${ov}id}

@@ -12,7 +12,7 @@ function referenceid.getid {
     if isset ${ov}stack ; then
       apop $1 ${ov}stack
     else
-      $1=${d}((++${ov}index))
+      $1=${d}((${ov}index++))
     fi
     return 0
   "

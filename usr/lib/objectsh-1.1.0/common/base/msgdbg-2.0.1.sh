@@ -1,8 +1,10 @@
 #!/bin/sh
 function msgdbg {
 ##input level,message
+  set -- $? "$@"
   typeset lc_msgdbg_return lc_msgdbg_level lc_msgdbg_message
-  lc_msgdbg_return=$?
+  lc_msgdbg_return=$1
+  shift
   lc_msgdbg_level="$1"
   lc_msgdbg_message="$2"
 #[of]:  usage

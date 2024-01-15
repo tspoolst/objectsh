@@ -3,13 +3,20 @@
 #[of]:description
 #[c]a class is composed of
 #[c]class
-#[c]  constructor
-#[c]  variables
+#[c]  class_constructor -- defines the class methods
+#[c]  class_variables -- exist for the life of the class, which is forever after the first object has been defined.
 #[c]  methods
+#[c]    method_variables -- they are localy scoped and are forgotten between method calls
+#[c]  static_methods -- methods that are built only once when the first object is defined and called by all objects
+#[c]    static_constructor -- defines the link_list that connects objects to the static methods, and defines the object static methods
+#[c]  destructor -- destroys an object and everything chained within the object
 #[c]  objects
-#[c]    variables
+#[c]    object_constructor -- defines the object methods
+#[c]    object_variables -- these variable are static for the object.  i.e. they keep their state between method calls
 #[c]    methods
-#[c]  destructior
+#[c]      dynamic_methods -- methods that are built every object
+#[c]      method_variables -- these variable are localy scoped and are forgotten between method calls
+#[c]    destructor -- used to destroy special structures not normally caught by the class level destructor
 #[c]  
 #[c]when a class is declared it needs to
 #[c]  initialize the object count to 0
@@ -138,7 +145,7 @@ if isfnset ${c}.staticconstructor ; then
 "
   while read i ; do
     i="${i##* }"
-    [[ "${i}" = ${c}.@(|static|class)constructor ]] && continue
+    [[ "${i}" == ${c}.@(static|class)constructor ]] && continue
     if [[ -z "${i##${c}.*}" ]] ; then
       f="${f}    function \${o}.${i##*.} {
       ${i} \${o} \${q}\${d}@\${q}

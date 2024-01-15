@@ -3,6 +3,7 @@
 
 ##if using bash insure extglob is on
 [[ -n "$BASH_VERSION" ]] && shopt -s extglob
+#[of]:if -ge bash 4
 if [[ -n "$BASH_VERSION" && "${BASH_VERSION%%.*}" -ge 4 ]] ; then
 #[of]:function hashkeys {
 function hashkeys {
@@ -381,7 +382,7 @@ if [[ -n "$BASH_VERSION" ]] ; then
       echo "hash error, empty keys are not permitted."
       exit 1
     fi
-    if ! ${_forcelower} && [[ "${lc_hashconvert2key_string}" = +([[:alnum:]]) ]] ; then
+    if ! ${_forcelower} && [[ -n "${lc_hashconvert2key_string##*[^[:alnum:]]*}" ]] ; then
       lc_hashconvert2key_key="${lc_hashconvert2key_string}"
     else
       while [[ ${#lc_hashconvert2key_string} -gt 0 ]] ; do
@@ -389,7 +390,7 @@ if [[ -n "$BASH_VERSION" ]] ; then
         if [[ "${lc_hashconvert2key_char}" = [[:alnum:]] ]] ; then
           if ${_forcelower} && [[ "${lc_hashconvert2key_char}" = [[:alpha:]] ]] ; then
             printf -v lc_hashconvert2key_char %o $((36#${lc_hashconvert2key_char}+87))
-            lc_hashconvert2key_key="${lc_hashconvert2key_key}$(echo -ne "\\${lc_hashconvert2key_char}")"
+            lc_hashconvert2key_key="${lc_hashconvert2key_key}$(echo -ne "\\0${lc_hashconvert2key_char}")"
           else
             lc_hashconvert2key_key="${lc_hashconvert2key_key}${lc_hashconvert2key_char}"
           fi
@@ -423,7 +424,7 @@ else
       echo "hash error, attempted to create an empty key."
       exit 1
     fi
-    if ! ${_forcelower} && [[ "${lc_hashconvert2key_string}" = +([[:alnum:]]) ]] ; then
+    if ! ${_forcelower} && [[ -n "${lc_hashconvert2key_string##*[^[:alnum:]]*}" ]] ; then
       lc_hashconvert2key_key="${lc_hashconvert2key_string}"
     else
       while [[ ${#lc_hashconvert2key_string} -gt 0 ]] ; do
@@ -446,6 +447,8 @@ else
   }
 fi
 #[cf]
+#[cf]
+#[of]:else -lt bash 4
 else
 #[of]:function hashkeys {
 function hashkeys {
@@ -888,5 +891,6 @@ else
     return 0
   }
 fi
+#[cf]
 #[cf]
 fi
