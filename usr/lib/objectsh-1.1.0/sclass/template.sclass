@@ -1,3 +1,4 @@
+#[of]:ver1
 #!/bin/ksh
 ##description: i.e. a colloction of __ handling tools
 
@@ -135,4 +136,206 @@ done
 #[cf]
   "
 }
+#[cf]
+#[cf]
+#[of]:ver2
+#!/bin/bash
+#[of]:comments
+#[of]:mouse movements
+#[c]mouse drag and drop
+#[c]on mouse down record object and position of down event
+#[c]  on mouseDrag
+#[c]    generate drag mp(message package) i.e. filename/url/etc.
+#[c]    on mouse up send mp to object that received the mouseUp event via a mouseDrop 
+#[c]  remove mouse down event data
+#[cf]
+#[c]
+#[of]:separate refresh events
+#[c]add individual control screen updates
+#[c]  already exist if $(o).refresh is called on a control object
+#[c]    however most controls don't have code to erase that block of screen first
+#[c]  if refresh called on a screen/window all children of that screen/window are updated
+#[cf]
+#[c]
+#[c]
+#[c]implement layer selection
+#[c]  all objects default to layer 0 (the lowest layer)
+#[c]  
+#[c]
+#[c]build
+#[c]  listbox
+#[c]    can contain check-boxes(1 or more selections) or circle-selectors(only 1 selection)
+#[c]  dropdown
+#[c]    like any other type of object, but it must always be draw above all other object
+#[c]  textbox
+#[c]    a textbox implies the ability to edit text
+#[c]
+#[c]modify
+#[c]  label - perhaps rename all button references to label
+#[c]    a button is just a label (usually with a border draw) with key/mouse events tagged to it.
+#[c]
+#[c]
+#[of]:notes
+#[c]If you are displaying text, that is, there is no user input...use a label.
+#[c]If you are trying to get user input, use a textbox.
+#[c]
+#[cf]
+#[cf]
+#[of]:template
+#[of]:description
+#[c]screen
+#[c]  size: grab from terminal
+#[c]  handle all Key/Mouse Events
+#[c]    button events happen either on the screen or in a window
+#[c]  window
+#[c]    button
+#[c]    slider
+#[c]    filebrowser
+#[cf]
+#[of]:static methods
+#[of]:function screen.staticconstructor {
+function screen.staticconstructor {
+#[of]:  function screen.open {
+function screen.open {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    typeset ${omv}key ${omv}mouse
+    typeset ${omv}mouseEvent ${omv}mouseEvents ${omv}mouseButtonId ${omv}mouseButtonName
+    typeset ${omv}mouseXStart ${omv}mouseYStart ${omv}mouseX ${omv}mouseY
+    typeset ${omv}currentRelX ${omv}currentRelY ${omv}relX ${omv}relY
+    typeset ${omv}mouseButtonState ${omv}shift ${omv}alt ${omv}ctrl
+    typeset ${omv}objectName ${omv}objectId
+    typeset ${omv}triggerId
+
+    ${omv}refreshInterval=${q}${d}{${ov}refreshInterval}${q}
+
+    ${c}.calcscreensize
+    ${o}.focusListBuild
+    ${o}.focusTriggerEnterEvent
+    ${o}.refresh
+    ${c}.mouseEnable -d
+    ${c}.mouseDisable
+
+    clear
+    return 0
+  "
+}
+#[cf]
+}
+#[cf]
+#[cf]
+#[of]:class methods
+#[of]:function screen.classconstructor {
+function screen.classconstructor {
+#[c]object
+#[of]:  includes
+  include hash
+  include referenceid
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.calcscreensize {
+function ${c}.calcscreensize {
+  set -- ${d}(stty size 2>/dev/null)
+  ${cv}height=${d}1
+  ${cv}width=${d}2
+  [[ -z ${q}${d}{${cv}height}${q} ]] && {
+    ${cv}height=24
+    ${cv}width=80
+  }
+  return 0
+}
+#[cf]
+#[of]:    class data
+newvar ${cv}height ${cv}width
+#[cf]
+#[of]:    class initialization commands
+    ${c}.calcscreensize
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:dynamic methods
+#[of]:function screen.constructor {
+function screen.constructor {
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+#[of]:  set/get builder loop
+  typeset _i
+  for _i in height width title drawBorder borderStyle ; do
+    eval "
+      newvar ${ov}${_i}
+      function ${o}.set${_i^} {
+        ${ov}${_i}=${q}${d}1${q}
+      }
+
+      function ${o}.get${_i^} {
+        if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+          echo ${q}${d}{${ov}${_i}}${q}
+        else
+          eval ${d}1=\\${q}\\${d}{${ov}${_i}}\\${q}
+        fi
+      }
+    "
+  done
+#[cf]
+  eval "
+#[of]:    function ${o}.bindEventAction {
+function ${o}.bindEventAction {
+  typeset _i
+  for _i in ${q}${d}{@:1:${d}#-1}${q} ; do
+    ${ov}inputEventActions.setkey ${q}${d}{_i}${q} ${q}${d}{@: -1}${q}
+  done
+}
+#[cf]
+#[of]:    object data
+newvar ${ov}objectPositions ${ov}objectNames
+newvar ${ov}previousMouseButtonName ${ov}previousMouseX ${ov}previousMouseY
+
+new hash ${ov}objects
+new hash ${ov}inputEventActions
+new referenceid ${ov}objectIdPool
+
+newvar ${ov}flagExit
+${ov}flagExit=0
+
+newvar ${ov}focusedObjectIndex ${ov}focusedObjectName ${ov}focusList ${ov}focusListMerged
+${ov}focusedObjectIndex=0
+
+
+typeset _precision
+newvar ${ov}tick ${ov}tickInterval ${ov}cycleLength ${ov}tickMax ${ov}tickIntervalSeconds
+newvar ${ov}timerTriggerIdList ${ov}tickTriggers
+new referenceid ${ov}timerTriggerIdPool
+_precision=100
+${ov}tick=0
+${ov}tickInterval=1000
+${ov}cycleLength=${d}((24*60*60))
+
+${ov}tickMax=${d}((_precision*1000/${ov}tickInterval*${ov}cycleLength/_precision))
+printf -v ${ov}tickIntervalSeconds '%04d' ${q}${d}{${ov}tickInterval}${q}
+${ov}tickIntervalSeconds=${q}${d}{${ov}tickIntervalSeconds%???}.${d}{${ov}tickIntervalSeconds#${d}{${ov}tickIntervalSeconds%???}}${q}
+
+newvar ${ov}refreshInterval
+${ov}refreshInterval=10
+
+#[cf]
+#[of]:    object initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[cf]
 #[cf]

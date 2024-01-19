@@ -25,6 +25,9 @@
 #[c]    class.new
 #[c]    class.size
 #[cf]
+#[of]:todo
+#[c]classes can not be extended
+#[cf]
 #[of]:setup globals
 gl_classpath=${gl_objectshbase}/common
 #[cf]
@@ -36,7 +39,7 @@ shopt -s extglob
 #[l]:array:common/base/array-2.0.0.sh
 . ${gl_classpath}/base/array-2.0.0.sh
 #[l]:hash:common/base/hash-2.1.0.sh
-. ${gl_classpath}/base/hash-2.1.0.sh
+. ${gl_classpath}/base/hash-1.2.0.sh
 #[l]:test:common/base/test-2.2.0.sh
 . ${gl_classpath}/base/test-2.2.0.sh
 #[l]:file:common/base/file-3.1.0.sh

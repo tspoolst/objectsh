@@ -357,8 +357,8 @@ function ${c}.convert2key {
     echo ${q}hash error, attempted to create an empty key.${q}
     exit 1
   fi
-  if { ! ${d}{${cv}forcelower} && [[ ${q}${d}{${cv}string}${q} = +([[:alnum:]]) ]]; } || [[ ${q}${d}{${cv}string}${q} = +([[:lower:]]) ]] ; then
-    ${cv}key=${q}${d}{${cv}string}${q}
+  if { ! ${d}{${cv}forcelower} && [[ -n ${q}${d}{${cv}string##*[^[:alnum:]_]*}${q} ]]; } || [[ -n ${q}${d}{${cv}string##*[^[:lower:][:digit:]_]*}${q} ]] ; then
+    ${cv}key=${q}${d}{${cv}string//_/5F}${q}
   else
     while [[ ${d}{#${cv}string} -gt 0 ]] ; do
       ${cv}char=${q}${d}{${cv}string%${q}${d}{${cv}string#?}${q}}${q}
