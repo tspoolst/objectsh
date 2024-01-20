@@ -102,8 +102,9 @@ if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
   typeset e
   e="${c}"
 fi
+shift
 if eval "[[ -n \"\${${c}_cm_extends}\" ]]" ; then
-  eval "new \${${c}_cm_extends} \${o}" || return $?
+  eval "new \${${c}_cm_extends} \"\$@\"" || return $?
 fi
 
 #[of]:  create object
@@ -121,7 +122,6 @@ fi
   eval "${o}_om_objectclass=${c}"
 #[cf]
 #[of]:set common environment
-shift
 #[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
