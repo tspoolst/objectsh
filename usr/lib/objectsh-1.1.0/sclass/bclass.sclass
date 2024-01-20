@@ -2,22 +2,70 @@
 #[of]:comments
 #[c]
 #[cf]
-#[of]:bclass
+#[of]:aclass
 #[of]:description
 #[cf]
+#[of]:class meta
+#[c]aclass_cm_extends=none
+
+#[cf]
+#[of]:class methods
+function aclass.classconstructor {
+#[c]object
+#[of]:  includes
+#[c]include hash
+#[c]include referenceid
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.camethod {
+function ${c}.camethod {
+  echo ${q}--${c}--${q}
+}
+#[cf]
+#[of]:    class data
+${cv}vara=a
+${cv}varb=b
+
+#[cf]
+#[of]:    class initialization commands
+
+#[cf]
+  "
+}
+#[cf]
 #[of]:static methods
-function bclass.staticconstructor {
+function aclass.staticconstructor {
   typeset ${omv}method
-#[of]:  smethod {
+#[of]:  samethod {
 IFS='' read -r -d '' ${omv}method <<'EOF'
-smethod {
+samethod {
 #[c]object -|var
 #[of]:  set common environment
 #[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-    return 0
+    echo ${q}--${c}--${o}--${q}
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
+#[of]:  mystatic {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+mystatic {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    echo ${q}from class a${q}
+    echo ${q}--${c}--${o}--${q}
   "
 }
 EOF
@@ -25,30 +73,130 @@ eval "eval \"function \${c}.\${${omv}method}\""
 #[cf]
 }
 #[cf]
+#[of]:dynamic methods
+function aclass.constructor {
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+#[of]:  set/get builder loop
+#[c]  typeset _i
+#[c]  for _i in height width title drawBorder borderStyle ; do
+#[c]    eval "
+#[c]      newvar ${ov}${_i}
+#[c]      function ${o}.set${_i^} {
+#[c]        ${ov}${_i}=${q}${d}1${q}
+#[c]      }
+#[c]
+#[c]      function ${o}.get${_i^} {
+#[c]        if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+#[c]          echo ${q}${d}{${ov}${_i}}${q}
+#[c]        else
+#[c]          eval ${d}1=\\${q}\\${d}{${ov}${_i}}\\${q}
+#[c]        fi
+#[c]      }
+#[c]    "
+#[c]  done
+#[cf]
+#[of]:  damethod
+m=damethod
+omv=${o}_mv_${m}_
+eval "function ${o}.${m} {
+  echo ${q}--${c}--${o}--${q}
+}"
+#[cf]
+#[of]:  mydynamic
+m=mydynamic
+omv=${o}_mv_${m}_
+eval "function ${o}.${m} {
+  echo ${q}from class a${q}
+  echo ${q}--${c}--${o}--${q}
+}"
+#[cf]
+  eval "
+#[of]:    object data
+newvar ${ov}vara ${ov}varb
+
+#[c]new hash ${ov}hasha
+#[c]new referenceid ${ov}idPoola
+
+#[cf]
+#[of]:    object initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:bclass
+#[of]:description
+#[cf]
+#[of]:class meta
+bclass_cm_extends=aclass
+
+#[cf]
 #[of]:class methods
 function bclass.classconstructor {
 #[c]object
 #[of]:  includes
-
+#[c]include hash
+#[c]include referenceid
 #[cf]
 #[of]:  set common environment
 #[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-#[of]:    function ${c}.cmethod {
-function ${c}.cmethod {
-set
-  return 0
+#[of]:    function ${c}.cbmethod {
+function ${c}.cbmethod {
+  echo ${q}--${c}--${q}
 }
 #[cf]
 #[of]:    class data
+${cv}vara=a
+${cv}varb=b
 
 #[cf]
 #[of]:    class initialization commands
 
 #[cf]
   "
+}
+#[cf]
+#[of]:static methods
+function bclass.staticconstructor {
+  typeset ${omv}method
+#[of]:  sbmethod {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+sbmethod {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    echo ${q}--${c}--${o}--${q}
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
+#[of]:  mystatic {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+mystatic {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    echo ${q}from class b${q}
+    echo ${q}--${c}--${o}--${q}
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
 }
 #[cf]
 #[of]:dynamic methods
@@ -76,15 +224,19 @@ function bclass.constructor {
 #[c]    "
 #[c]  done
 #[cf]
-#[of]:  dmethod
-m=dmethod
+#[of]:  dbmethod
+m=dbmethod
 omv=${o}_mv_${m}_
 eval "function ${o}.${m} {
-  return 0
+  echo ${q}--${c}--${o}--${q}
 }"
 #[cf]
   eval "
 #[of]:    object data
+newvar ${ov}vara ${ov}varb
+
+#[c]new hash ${ov}hasha
+#[c]new referenceid ${ov}idPoola
 
 #[cf]
 #[of]:    object initialization commands
@@ -109,25 +261,9 @@ eval "function ${o}.${m} {
 #[c]new eclass tobject
 #[c]load 
 #[cf]
-#[of]:static methods
-function eclass.staticconstructor {
-  typeset ${omv}method
-#[of]:  smethod {
-IFS='' read -r -d '' ${omv}method <<'EOF'
-smethod {
-#[c]object -|var
-#[of]:  set common environment
-#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
-  . ${gl_classpath}/classcommonenv.sh
-#[cf]
-  eval "
-    return 0
-  "
-}
-EOF
-eval "eval \"function \${c}.\${${omv}method}\""
-#[cf]
-}
+#[of]:class meta
+eclass_cm_extends=bclass
+
 #[cf]
 #[of]:class methods
 function eclass.classconstructor {
@@ -140,19 +276,40 @@ function eclass.classconstructor {
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
   eval "
-#[of]:    function ${c}.cmethod {
-function ${c}.cmethod {
-set
-  return 0
+#[of]:    function ${c}.cemethod {
+function ${c}.cemethod {
+  echo ${q}--${c}--${q}
 }
 #[cf]
 #[of]:    class data
+${cv}vara=a
+${cv}varb=b
 
 #[cf]
 #[of]:    class initialization commands
 
 #[cf]
   "
+}
+#[cf]
+#[of]:static methods
+function eclass.staticconstructor {
+  typeset ${omv}method
+#[of]:  semethod {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+semethod {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    echo ${q}--${c}--${o}--${q}
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
 }
 #[cf]
 #[of]:dynamic methods
@@ -180,15 +337,27 @@ function eclass.constructor {
 #[c]    "
 #[c]  done
 #[cf]
-#[of]:  dmethod
-m=dmethod
+#[of]:  demethod
+m=demethod
 omv=${o}_mv_${m}_
 eval "function ${o}.${m} {
-  return 0
+  echo ${q}--${c}--${o}--${q}
+}"
+#[cf]
+#[of]:  mydynamic
+m=mydynamic
+omv=${o}_mv_${m}_
+eval "function ${o}.${m} {
+  echo ${q}from class e${q}
+  echo ${q}--${c}--${o}--${q}
 }"
 #[cf]
   eval "
 #[of]:    object data
+newvar ${ov}vara ${ov}varb
+
+#[c]new hash ${ov}hasha
+#[c]new referenceid ${ov}idPoola
 
 #[cf]
 #[of]:    object initialization commands

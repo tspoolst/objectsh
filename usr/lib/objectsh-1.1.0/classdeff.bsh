@@ -81,20 +81,31 @@ function destroy {
 function new {
 #[c]classname objectname
   typeset c o
-  c=$1
-  o=$2
+  c="$1"
+  o="$2"
+
+if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
 #[of]:  error if object is already defined
   if isfnset "${o}" ; then
     echo "error an object named ${o} already exist"
     exit 1
   fi
 #[cf]
-#[of]:  error if no constructor
+fi
+#[of]:error if no constructor
   if ! isfnset "${c}.constructor" ; then
     echo "creation of object \"${o}\" failed, no class type of \"${c}\" has been defined"
     exit 1
   fi
 #[cf]
+if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
+  typeset e
+  e="${c}"
+fi
+if eval "[[ -n \"\${${c}_cm_extends}\" ]]" ; then
+  eval "new \${${c}_cm_extends} \${o}" || return $?
+fi
+
 #[of]:  create object
 #echo creating ${o}
 #[of]:clean object environment
@@ -114,6 +125,10 @@ shift
 #[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
   . ${gl_classpath}/classcommonenv.sh
 #[cf]
+#[of]:define object meta - variable list storage
+#[c]Associative arrays are local by default
+declare -gA ${om}variables
+#[cf]
 #[of]:save objectsname into object
   eval "${om}objectname=${o}"
 #[cf]
@@ -124,16 +139,7 @@ if isset ${cm}methods ; then
   isfnset ${c}.staticconstructor && ${c}.staticconstructor ${o}
 #[cf]
 #[of]:  construct dynamic methods
-  ${c}.constructor ${o} "${@}"
-#[of]:  ${o}
-  if ! isfnset "${o}" ; then
-    eval "
-      function ${o} {
-        die 1 ${q}the object \\${q}${o}\\${q} of class \\${q}${c}\\${q} does not support operator calls${q}
-      }
-    "
-  fi
-#[cf]
+  newObjectConstructorCallout "${@}"
 #[cf]
 #[cf]
 else
@@ -213,7 +219,7 @@ fi
 #[of]:            destroy object vars
     #unset \${o} \${d}{!\${om}*} \${d}{!\${ov}*}
     unset \${o}
-    unset \${d}{\${om}variables[@]} \${om}variables
+    unset \${d}{!\${om}variables[@]} \${om}variables
     unset \${om}objectclass \${om}objectname \${om}objectparent
 #[cf]
           ${q}
@@ -223,16 +229,7 @@ fi
 #[cf]
 #[cf]
 #[of]:  construct dynamic methods
-  ${c}.constructor ${o} "${@}"
-#[of]:  ${o}
-  if ! isfnset "${o}" ; then
-    eval "
-      function ${o} {
-        die 1 ${q}the object \\${q}${o}\\${q} of class \\${q}${c}\\${q} does not support operator calls${q}
-      }
-    "
-  fi
-#[cf]
+  newObjectConstructorCallout "${@}"
   typeset i
   while read i ; do
     i="${i##* }"
@@ -247,7 +244,27 @@ fi
 #[cf]
 #[of]:  save objectname into list
   ##save objectname into class object list
-  hashsetkey ${cm}index ${o} ""
+  if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
+    hashsetkey ${cm}index ${o} ""
+  fi
+#[cf]
+}
+#[cf]
+#[of]:function newObjectConstructorCallout {
+function newObjectConstructorCallout {
+## this is done because we can not set a global variable in a function
+##   and then declare the same variable as a local while still in that function
+  typeset ${om}objectclass
+  eval ${om}objectclass=\"\${e}\"
+  ${c}.constructor ${o} "${@}"
+#[of]:  ${o}
+  if ! isfnset "${o}" ; then
+    eval "
+      function ${o} {
+        die 1 ${q}the object \\${q}${o}\\${q} of class \\${q}${e}\\${q} does not support operator calls${q}
+      }
+    "
+  fi
 #[cf]
 }
 #[cf]
@@ -256,8 +273,8 @@ function newvar {
   isset om || die 1 "newvar must be called within a method"
   typeset i
   for i ; do
+    eval "${om}variables[\${i}]=''"
     unset ${i}
-    apush ${om}variables ${i}
   done
 }
 #[cf]

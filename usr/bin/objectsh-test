@@ -187,9 +187,22 @@ include bclass
 #[cf]
 #[of]:main
 #[c]set -xv
-new bclass tobject
+#[c]new bclass tobject
 new eclass tobject
 
 #[c]set
+#[c]tobject.samethod
+#[c]tobject.sbmethod
+#[c]tobject.semethod
+#[c]tobject.damethod
+#[c]tobject.dbmethod
+#[c]tobject.demethod
+
+tobject.mystatic
+tobject.mydynamic
+exit
+
+destroy tobject
+set
 
 #[cf]
