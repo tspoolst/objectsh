@@ -1,0 +1,195 @@
+#!/bin/bash
+#[c]
+#[of]:functions
+#[of]:function pause {
+function pause {
+  typeset _key
+  typeset lc_timeout lc_message lc_errorlevel
+  lc_errorlevel=0
+  isnum "$1" && {
+    lc_timeout="$1"
+    shift
+  }
+  lc_message="${1:-press any key to continue}"
+  
+  echo -en "\e[?1000;1006;1015h"
+
+  if ${gl_pause:-true} ; then
+    if [[ -z "${lc_timeout}" ]] ; then
+      echo -n "${lc_message}"
+      while read -s -N 1 -r _key ; do
+        pauseHandleKey "${_key}" && break
+      done
+    else
+      echo -n "${lc_message} - ${lc_timeout}"
+      for ((b=${lc_timeout};b>0;b--)) ; do
+        ((b>9)) && echo -ne "\b\b${b}" || echo -ne "\b\b ${b}"
+        if read -s -t 1 -N 1 -r _key ; then
+          pauseHandleKey "${_key}" && {
+            lc_errorlevel=0
+            break
+          }
+        else
+          lc_errorlevel=1
+        fi
+      done
+    fi
+  fi
+  echo -en "\e[?1000;1006;1015l"
+  return ${lc_errorlevel}
+}
+#[of]:function pauseHandleKey {
+function pauseHandleKey {
+  typeset _key _mouse _mouseEvent
+  _key="$1"
+  case "${_key}" in
+#[of]:    escaped keys
+        $'\E')
+          read -s -n 2 -r -t 1 _key || {
+#[of]:            esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            return 0
+#[cf]
+          }
+          case "${_key}" in
+#[of]:            mouse
+            '[<')
+              _mouse=""
+              _mouseEvent=( _ _ _ _ _ )
+              while read -s -n 1 -r _key ; do
+                _mouse="${_mouse}${_key}"
+                [[ "${_key}" =~ (M|m) ]] && break
+              done
+
+              [[ -z "${_mouse%%*M}" ]] && _mouseEvent[4]="down"
+              [[ -z "${_mouse%%*m}" ]] && _mouseEvent[4]="up"
+              _mouse="${_mouse:0:-1}"
+              _mouseEvent=( ${_mouse//\;/ } _ ${_mouseEvent[4]} )
+
+              [[ "${_mouseEvent[0]}" =~ (1) && "${_mouseEvent[4]}" == "down" ]] && {
+                if read -s -n 1 -r _key ; then
+                  pauseHandleKey "${_key}" && return 0
+                else
+                  return 1
+                fi
+              }
+
+              [[ "${_mouseEvent[0]}" =~ (0|1|2) && "${_mouseEvent[4]}" == "up" ]]
+              ;;
+#[cf]
+#[of]:            *)
+            *)
+              return 0
+              ;;
+#[cf]
+          esac
+          ;;
+#[cf]
+#[of]:    *)
+        *)
+          return 0
+          ;;
+#[cf]
+  esac
+}
+#[cf]
+#[cf]
+#[of]:function askyn {
+function askyn {
+  typeset _key _return _mouse _mouseEvent
+  echo -en "\e[?1000;1006;1015h"
+  echo -n "${1:-continue}? [y/n] "
+  while true ; do
+    read -s -n 1 -r _key
+    case "${_key}" in
+#[of]:      escaped keys
+      $'\E')
+        read -s -n 2 -r -t .1 _key || {
+#[of]:          esc
+#[c]            esc itself is just a single char
+#[c]            if read timeout is reached the key must be esc
+            continue
+#[cf]
+        }
+        case "${_key}" in
+#[of]:          mouse
+            '[<')
+              _mouse=""
+              _mouseEvent=( _ _ _ _ _ )
+              while read -s -n 1 -r _key ; do
+                _mouse="${_mouse}${_key}"
+                [[ "${_key}" =~ (M|m) ]] && break
+              done
+              [[ -z "${_mouse%%*M}" ]] && _mouseEvent[4]="down"
+              [[ -z "${_mouse%%*m}" ]] && _mouseEvent[4]="up"
+              _mouse="${_mouse:0:-1}"
+              _mouseEvent=( ${_mouse//\;/ } _ ${_mouseEvent[4]} )
+
+              [[ "${_mouseEvent[0]}" =~ (0) && "${_mouseEvent[4]}" == "up" ]] && { _return=0;break; }
+              [[ "${_mouseEvent[0]}" =~ (2) && "${_mouseEvent[4]}" == "up" ]] && { _return=1;break; }
+              ;;
+#[cf]
+        esac
+        ;;
+#[cf]
+      y) _return=0;break;;
+      *) _return=1;break;;
+    esac
+  done
+  echo
+  echo -en "\e[?1000;1006;1015l"
+  return ${_return}
+}
+#[cf]
+#[of]:function strlen {
+function strlen {
+#[of]:  usage
+  if [ "$#" -ne 2 ] ; then
+    echo "Usage: strlen {var|-} [string]"
+    echo "Error: must have 2 arguments"
+    echo "Description: returns number of character in a string"
+    echo "Examples:"
+    echo '  strlen length "mystring"'
+    echo '  strlen - "A Test String"'
+    echo "Returns:"
+    echo "  0 success"
+    exit 1
+  fi
+#[cf]
+  if [[ "$1" = "-" ]] ; then
+    echo "${#2}"
+  else
+    eval $1=\"\${#2}\"
+  fi
+  return 0
+}
+#[cf]
+#[of]:function secToHMS {
+function secToHMS {
+  typeset h m s
+  s=$1
+  ((h=s/3600))
+  ((m=(s%3600)/60))
+  ((s=s%60));printf '%02d:%02d:%02d' ${h} ${m} ${s}
+}
+#[cf]
+#[c]
+#[cf]
+#[of]:includes
+#[l]:classdeff.bsh:/usr/lib/objectsh-1/classdeff.bsh
+gl_objectshbase=/usr/lib/objectsh-1
+. ${gl_objectshbase}/classdeff.bsh
+
+#[l]:bclass.sclass:/usr/lib/objectsh-1/sclass/bclass.sclass
+include bclass
+
+#[cf]
+#[of]:main
+#[c]set -xv
+new bclass tobject
+new eclass tobject
+
+#[c]set
+
+#[cf]

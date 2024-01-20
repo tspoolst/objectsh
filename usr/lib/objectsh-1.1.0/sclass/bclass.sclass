@@ -1,0 +1,200 @@
+#!/bin/bash
+#[of]:comments
+#[c]
+#[cf]
+#[of]:bclass
+#[of]:description
+#[cf]
+#[of]:static methods
+function bclass.staticconstructor {
+  typeset ${omv}method
+#[of]:  smethod {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+smethod {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    return 0
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
+}
+#[cf]
+#[of]:class methods
+function bclass.classconstructor {
+#[c]object
+#[of]:  includes
+
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.cmethod {
+function ${c}.cmethod {
+set
+  return 0
+}
+#[cf]
+#[of]:    class data
+
+#[cf]
+#[of]:    class initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[of]:dynamic methods
+function bclass.constructor {
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+#[of]:  set/get builder loop
+#[c]  typeset _i
+#[c]  for _i in height width title drawBorder borderStyle ; do
+#[c]    eval "
+#[c]      newvar ${ov}${_i}
+#[c]      function ${o}.set${_i^} {
+#[c]        ${ov}${_i}=${q}${d}1${q}
+#[c]      }
+#[c]
+#[c]      function ${o}.get${_i^} {
+#[c]        if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+#[c]          echo ${q}${d}{${ov}${_i}}${q}
+#[c]        else
+#[c]          eval ${d}1=\\${q}\\${d}{${ov}${_i}}\\${q}
+#[c]        fi
+#[c]      }
+#[c]    "
+#[c]  done
+#[cf]
+#[of]:  dmethod
+m=dmethod
+omv=${o}_mv_${m}_
+eval "function ${o}.${m} {
+  return 0
+}"
+#[cf]
+  eval "
+#[of]:    object data
+
+#[cf]
+#[of]:    object initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[cf]
+#[of]:eclass
+#[of]:description
+#[c]eclass extends bclass
+#[c]
+#[c]somehow....
+#[c]
+#[c]new object is created with links going back to bclass
+#[c]  variables and methods are inherited
+#[c]  new methods are used as normal
+#[c]
+#[c]define object on bclass and then eclass
+#[c]
+#[c]new eclass tobject
+#[c]load 
+#[cf]
+#[of]:static methods
+function eclass.staticconstructor {
+  typeset ${omv}method
+#[of]:  smethod {
+IFS='' read -r -d '' ${omv}method <<'EOF'
+smethod {
+#[c]object -|var
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+    return 0
+  "
+}
+EOF
+eval "eval \"function \${c}.\${${omv}method}\""
+#[cf]
+}
+#[cf]
+#[of]:class methods
+function eclass.classconstructor {
+#[c]object
+#[of]:  includes
+
+#[cf]
+#[of]:  set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.cmethod {
+function ${c}.cmethod {
+set
+  return 0
+}
+#[cf]
+#[of]:    class data
+
+#[cf]
+#[of]:    class initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[of]:dynamic methods
+function eclass.constructor {
+#[of]:set common environment
+#[l]:classcommonenv.sh:/usr/lib/objectsh-1/common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+#[of]:  set/get builder loop
+#[c]  typeset _i
+#[c]  for _i in height width title drawBorder borderStyle ; do
+#[c]    eval "
+#[c]      newvar ${ov}${_i}
+#[c]      function ${o}.set${_i^} {
+#[c]        ${ov}${_i}=${q}${d}1${q}
+#[c]      }
+#[c]
+#[c]      function ${o}.get${_i^} {
+#[c]        if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+#[c]          echo ${q}${d}{${ov}${_i}}${q}
+#[c]        else
+#[c]          eval ${d}1=\\${q}\\${d}{${ov}${_i}}\\${q}
+#[c]        fi
+#[c]      }
+#[c]    "
+#[c]  done
+#[cf]
+#[of]:  dmethod
+m=dmethod
+omv=${o}_mv_${m}_
+eval "function ${o}.${m} {
+  return 0
+}"
+#[cf]
+  eval "
+#[of]:    object data
+
+#[cf]
+#[of]:    object initialization commands
+
+#[cf]
+  "
+}
+#[cf]
+#[cf]

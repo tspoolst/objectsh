@@ -148,7 +148,7 @@ if isfnset ${c}.staticconstructor ; then
 "
   while read i ; do
     i="${i##* }"
-    [[ "${i}" == ${c}.@(static|class)constructor ]] && continue
+    [[ "${i}" == ${c}.*(static|class)constructor ]] && continue
     if [[ -z "${i##${c}.*}" ]] ; then
       f="${f}    function \${o}.${i##*.} {
       ${i} \${o} \${q}\${d}@\${q}
