@@ -2,31 +2,50 @@
 
 #[of]:description
 #[c]a class is composed of
-#[c]class
-#[c]  class_constructor -- defines the class methods
-#[c]  class_variables -- exist for the life of the class, which is forever after the first object has been defined.
-#[c]  methods
-#[c]    method_variables -- they are localy scoped and are forgotten between method calls
-#[c]  static_methods -- methods that are built only once when the first object is defined and called by all objects
-#[c]    static_constructor -- defines the link_list that connects objects to the static methods, and defines the object static methods
+#[c]  class_constructor  -- defines the class methods
+#[c]  static_constructor -- defines the static object methods
+#[c]  constructor        -- defines the (dynamic) object methods
+#[c]
+#[c]  class_variables  -- exist for the life of the class, which is forever after the first object has been defined.
+#[c]  object_variables -- these variable are static between object method calls.  i.e. their values are not lost between calls
+#[c]  method_variables -- these variable are localy scoped and are forgotten between object method calls
+#[c]
 #[c]  destructor -- destroys an object and everything chained within the object
-#[c]  objects
-#[c]    object_constructor -- defines the object methods
-#[c]    object_variables -- these variable are static for the object.  i.e. they keep their state between method calls
-#[c]    methods
-#[c]      dynamic_methods -- methods that are built every object
-#[c]      method_variables -- these variable are localy scoped and are forgotten between method calls
-#[c]    destructor -- used to destroy special structures not normally caught by the class level destructor
-#[c]  
-#[c]when a class is declared it needs to
-#[c]  initialize the object count to 0
-#[c]  define base class methods
-#[c]    class
-#[c]    class.new
-#[c]    class.size
+#[c]                  used to destroy special structures not normally caught by the class level destructor
+#[c]
+#[c]
+#[c]what is a
+#[c]  class method;
+#[c]    is defined/created only once when the first object is defined
+#[c]    is called by prefixing the method with the class name "myclass.mymethod"
+#[c]    there is no extra over head calling these methods
+#[c]  static method:
+#[c]    is defined/created only once when the first object is defined
+#[c]    is called by prefixing the method with the object name "myobject.mymethod"
+#[c]    these methods must resolve the object name before they run
+#[c]  (dynamic) method:
+#[c]    a copy is defined/created for each object defined
+#[c]    is called by prefixing the method with the object name "myobject.mymethod"
+#[c]    there is no extra over head calling these methods
+#[c]
+#[c]
+#[c]when to maybe use a
+#[c]  class method:
+#[c]    if the method
+#[c]      reads/modifies any object data = no
+#[c]      is needed for a the class but is not specific to any object = yes
+#[c]      is ever called outside of an object = yes, but the class must be defined first by creating a new object
+#[c]  static method:
+#[c]    if the method
+#[c]      runs infrequently = yes
+#[c]      is large/more than a few lines = yes
+#[c]      requires local vars = yes
+#[c]  (dynamic) method:
+#[c]    if the method:
+#[c]      is a few lines or less = yes
+#[c]      runs frequently = yes
 #[cf]
 #[of]:todo
-#[c]classes can not be extended
 #[cf]
 #[of]:setup globals
 gl_classpath=${gl_objectshbase}/common
@@ -38,7 +57,7 @@ shopt -s extglob
 . ${gl_classpath}/base/string-2.0.1.sh
 #[l]:array:common/base/array-2.0.0.sh
 . ${gl_classpath}/base/array-2.0.0.sh
-#[l]:hash:common/base/hash-2.1.0.sh
+#[l]:hash:common/base/hash-1.2.0.sh
 . ${gl_classpath}/base/hash-1.2.0.sh
 #[l]:test:common/base/test-2.2.0.sh
 . ${gl_classpath}/base/test-2.2.0.sh
@@ -275,6 +294,32 @@ function newvar {
   for i ; do
     eval "${om}variables[\${i}]=''"
     unset ${i}
+  done
+}
+#[cf]
+#[of]:function newPublicVar {
+function newPublicVar {
+  isset om || die 1 "newPublicVar must be called within a method"
+  typeset _i
+  for _i in $@ ; do
+    eval "
+      newvar ${ov}${_i}
+      if ! isfnset ${q}${o}.set${_i^}${q} ; then
+        function ${o}.set${_i^} {
+          ${ov}${_i}=${q}${d}1${q}
+        }
+      fi
+
+      if ! isfnset ${q}${o}.get${_i^}${q} ; then
+        function ${o}.get${_i^} {
+          if [[ ${q}${d}1${q} = ${q}-${q} ]] ; then
+            echo ${q}${d}{${ov}${_i}}${q}
+          else
+            eval ${d}1=\\${q}\\${d}{${ov}${_i}}\\${q}
+          fi
+        }
+      fi
+    "
   done
 }
 #[cf]
