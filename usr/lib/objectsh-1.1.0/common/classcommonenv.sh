@@ -8,12 +8,14 @@
 ##  omv = object method var prefix {o}_mv_{m}_
 ##  cm = class meta data var prefix {c}_cm_
 ##  om = object meta data var prefix {o}_om_
-typeset q d b m o om ov omv c cm cv cmv
+##  smc = static method class
+typeset q d b m o om ov omv c cm cv cmv smc
 q='"'
 d='$'
 b='`'
 
 m="${FUNCNAME[1]##*.}"
+smc="${FUNCNAME[2]%%.*}"
 
 o=$1
 om="${o}_om_"

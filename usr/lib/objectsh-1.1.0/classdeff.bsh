@@ -44,6 +44,21 @@
 #[c]    if the method:
 #[c]      is a few lines or less = yes
 #[c]      runs frequently = yes
+#[c]
+#[c]extended classes
+#[c]  Definitions:
+#[c]    A class that is derived from another class is called a subclass (also a derived 
+#[c]    class, extended class, or child class). The class from which the subclass is derived 
+#[c]    is called a superclass (also a base class or a parent class).
+#[c]
+#[c]  all base class (dynamic) methods are overwritten by sub class methods
+#[c]  all base class links to static methods are overwritten by sub class static methods
+#[c]  base class static methods can be called directly by name or with the following buildup
+#[c]    ${d}{${cm}baseClass}.${m} ${o} ${q}${d}@${q}
+#[c]  base class static methods can detect a call from a sub class with this with the following buildup
+#[c]    ## true only if the object class is not the same as this static methods class
+#[c]    [ ${q}${c}${q} != ${q}${smc}${q} ] && { ;; }
+#[c]  
 #[cf]
 #[of]:todo
 #[cf]
@@ -122,8 +137,8 @@ if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
   e="${c}"
 fi
 shift
-if eval "[[ -n \"\${${c}_cm_extends}\" ]]" ; then
-  eval "new \${${c}_cm_extends} \"\$@\"" || return $?
+if eval "[[ -n \"\${${c}_cm_baseClass}\" ]]" ; then
+  eval "new \${${c}_cm_baseClass} \"\$@\"" || return $?
 fi
 
 #[of]:  create object
