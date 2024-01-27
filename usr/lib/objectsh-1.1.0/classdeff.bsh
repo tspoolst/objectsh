@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #[of]:description
 #[c]a class is composed of
 #[c]  class_constructor  -- defines the class methods
@@ -68,8 +67,8 @@ gl_classpath=${gl_objectshbase}/common
 #[of]:functions
 #[of]:base
 shopt -s extglob
-#[l]:string:common/base/string-2.0.1.sh
-. ${gl_classpath}/base/string-2.0.1.sh
+#[l]:string:common/base/string-1.1.0.sh
+. ${gl_classpath}/base/string-1.1.0.sh
 #[l]:array:common/base/array-2.0.0.sh
 . ${gl_classpath}/base/array-2.0.0.sh
 #[l]:hash:common/base/hash-1.2.0.sh
@@ -118,6 +117,13 @@ function new {
   c="$1"
   o="$2"
 
+#[of]:error if class and object have same name
+  if [[ "${c}" = "${o}" ]] ; then
+    echo "creation of object \"${o}\" failed, a class named \"${c}\" has already been defined."
+    echo "check your include list and/or rename your object."
+    exit 1
+  fi
+#[cf]
 if [[ "${FUNCNAME[0]}" != "${FUNCNAME[1]}" ]] ; then
 #[of]:  error if object is already defined
   if isfnset "${o}" ; then
@@ -339,3 +345,4 @@ function newPublicVar {
 }
 #[cf]
 #[cf]
+# vim:number:tabstop=2:shiftwidth=2:autoindent:foldmethod=marker:foldlevel=0:foldmarker=#[of]\:,#[cf]

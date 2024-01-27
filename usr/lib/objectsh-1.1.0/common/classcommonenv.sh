@@ -14,8 +14,14 @@ q='"'
 d='$'
 b='`'
 
-m="${FUNCNAME[1]##*.}"
-smc="${FUNCNAME[2]%%.*}"
+## bug/feature? -- bash ${FUNCNAME[0]} returns "source" if the codeblock is imported with . or source
+if [[ "${FUNCNAME[0]}" != "source" ]] ; then
+  m="${FUNCNAME[0]##*.}"
+  smc="${FUNCNAME[1]%%.*}"
+else
+  m="${FUNCNAME[1]##*.}"
+  smc="${FUNCNAME[2]%%.*}"
+fi
 
 o=$1
 om="${o}_om_"
