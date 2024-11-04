@@ -2,6 +2,65 @@
 
 ##a colloction of hash handling tools
 #[of]:hash
+#[of]:comments
+#[c]please fix
+#[c]  this library currently only works to one layer deep.
+#[c]  it also need some severe optimizations
+#[c]    the older non object hash library works better
+#[c]    this one is currently a memory pig
+#[cf]
+#[of]:class methods
+function hash.classconstructor {
+#[c]object
+#[of]:  set common environment
+#[l]:classcommonenv.sh:../common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+#[cf]
+  eval "
+#[of]:    function ${c}.convert2key {
+function ${c}.convert2key {
+#[c][var] value
+  typeset ${cv}string ${cv}char ${cv}hexpart ${cv}key
+  typeset ${cv}forcelower=false
+  if [[ ${q}${d}1${q} = ${q}-l${q} ]] ; then
+    ${cv}forcelower=true
+    shift
+  fi
+  ${cv}string=${q}${d}{2-${d}1}${q}
+  if [[ -z ${q}${d}{${cv}string}${q} ]] ; then
+    echo ${q}hash error, attempted to create an empty key.${q}
+    exit 1
+  fi
+  if { ! ${d}{${cv}forcelower} && [[ -n ${q}${d}{${cv}string##*[^[:alnum:]_]*}${q} ]]; } || [[ -n ${q}${d}{${cv}string##*[^[:lower:][:digit:]_]*}${q} ]] ; then
+    ${cv}key=${q}${d}{${cv}string//_/5F}${q}
+  else
+    while [[ ${d}{#${cv}string} -gt 0 ]] ; do
+      ${cv}char=${q}${d}{${cv}string%${q}${d}{${cv}string#?}${q}}${q}
+      if [[ ${q}${d}{${cv}char}${q} = [[:alnum:]] ]] ; then
+        if ${d}{${cv}forcelower} && [[ ${q}${d}{${cv}char}${q} = [[:upper:]] ]] ; then
+          printf -v ${cv}char %o ${d}((36#${d}{${cv}char}+87))
+          ${cv}key=${q}${d}{${cv}key}${d}(echo -ne ${q}\\\\${d}{${cv}char}${q})${q}
+        else
+          ${cv}key=${q}${d}{${cv}key}${d}{${cv}char}${q}
+        fi
+      else
+        printf -v ${cv}hexpart %02X ${q}'${d}{${cv}char}${q}
+        ${cv}key=${q}${d}{${cv}key}${d}{${cv}hexpart}${q}
+      fi
+      ${cv}string=${q}${d}{${cv}string#?}${q}
+    done
+  fi
+  if [[ ${d}# -eq 1 ]] ; then
+    echo ${q}${d}{${cv}key}${q}
+  else
+    eval ${q}${d}1=\${q}\${d}{${cv}key}\${q}${q}
+  fi
+  return 0
+}
+#[cf]
+  "
+}
+#[cf]
 #[of]:static methods
 function hash.staticconstructor {
 #[of]:  function hash.items {
@@ -180,7 +239,7 @@ function hash.setkey {
           ${omv}node=1
         fi
         ${ov}_${d}{${omv}key}.setkey ${q}${d}{${omv}args[@]}${q} ${q}${d}{${omv}math}${q} ${q}${d}{${omv}value}${q}
-        unset ${omv}math
+        unset ${omv}math ${omv}value
       fi
     fi
     eval ${q}
@@ -335,58 +394,6 @@ function hash.newiterator {
 #[cf]
 }
 #[cf]
-#[of]:class methods
-function hash.classconstructor {
-#[c]object
-#[of]:  set common environment
-#[l]:classcommonenv.sh:../common/classcommonenv.sh
-  . ${gl_classpath}/classcommonenv.sh
-#[cf]
-  eval "
-#[of]:    function ${c}.convert2key {
-function ${c}.convert2key {
-#[c][var] value
-  typeset ${cv}string ${cv}char ${cv}hexpart ${cv}key
-  typeset ${cv}forcelower=false
-  if [[ ${q}${d}1${q} = ${q}-l${q} ]] ; then
-    ${cv}forcelower=true
-    shift
-  fi
-  ${cv}string=${q}${d}{2-${d}1}${q}
-  if [[ -z ${q}${d}{${cv}string}${q} ]] ; then
-    echo ${q}hash error, attempted to create an empty key.${q}
-    exit 1
-  fi
-  if { ! ${d}{${cv}forcelower} && [[ -n ${q}${d}{${cv}string##*[^[:alnum:]_]*}${q} ]]; } || [[ -n ${q}${d}{${cv}string##*[^[:lower:][:digit:]_]*}${q} ]] ; then
-    ${cv}key=${q}${d}{${cv}string//_/5F}${q}
-  else
-    while [[ ${d}{#${cv}string} -gt 0 ]] ; do
-      ${cv}char=${q}${d}{${cv}string%${q}${d}{${cv}string#?}${q}}${q}
-      if [[ ${q}${d}{${cv}char}${q} = [[:alnum:]] ]] ; then
-        if ${d}{${cv}forcelower} && [[ ${q}${d}{${cv}char}${q} = [[:upper:]] ]] ; then
-          printf -v ${cv}char %o ${d}((36#${d}{${cv}char}+87))
-          ${cv}key=${q}${d}{${cv}key}${d}(echo -ne ${q}\\\\${d}{${cv}char}${q})${q}
-        else
-          ${cv}key=${q}${d}{${cv}key}${d}{${cv}char}${q}
-        fi
-      else
-        printf -v ${cv}hexpart %02X ${q}'${d}{${cv}char}${q}
-        ${cv}key=${q}${d}{${cv}key}${d}{${cv}hexpart}${q}
-      fi
-      ${cv}string=${q}${d}{${cv}string#?}${q}
-    done
-  fi
-  if [[ ${d}# -eq 1 ]] ; then
-    echo ${q}${d}{${cv}key}${q}
-  else
-    eval ${q}${d}1=\${q}\${d}{${cv}key}\${q}${q}
-  fi
-  return 0
-}
-#[cf]
-  "
-}
-#[cf]
 #[of]:dynamic methods
 function hash.constructor {
 #[c]object
@@ -496,7 +503,7 @@ function hashiterator.step {
   "
 }
 #[cf]
-#[of]:  function hashiterator.currentitem {
+#[of]:  function hashiterator.currentkey {
 function hashiterator.currentitem {
 #[c]object [-|var]
 #[l]:  classcommonenv.sh:common/classcommonenv.sh
@@ -509,6 +516,22 @@ function hashiterator.currentitem {
     eval "echo ${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q}"
   else
     eval "$1=(${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q} ${q}${d}{${_aggregate}_ov_hash__data_${_key}}${q})"
+  fi
+}
+#[cf]
+#[of]:  function hashiterator.currentitem {
+function hashiterator.currentitem {
+#[c]object [-|var]
+#[l]:  classcommonenv.sh:common/classcommonenv.sh
+  . ${gl_classpath}/classcommonenv.sh
+  eval "
+    typeset _aggregate=${d}{${ov}hash}
+    typeset _key=${q}${d}{${ov}key}${q}
+  "
+  if [[ "$1" = "-" ]] ; then
+    eval "echo ${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q}"
+  else
+    eval "$1=( ${q}${d}{${_aggregate}_ov_hash__meta_${_key}[0]}${q} ${q}${d}{${_aggregate}_ov_hash__data_${_key}}${q} )"
   fi
 }
 #[cf]

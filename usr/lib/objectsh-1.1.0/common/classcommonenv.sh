@@ -8,7 +8,7 @@
 ##  omv = object method var prefix {o}_mv_{m}_
 ##  cm = class meta data var prefix {c}_cm_
 ##  om = object meta data var prefix {o}_om_
-##  smc = static method class
+##  smc = static method class (the class of the current static method) {smc}
 typeset q d b m o om ov omv c cm cv cmv smc
 q='"'
 d='$'

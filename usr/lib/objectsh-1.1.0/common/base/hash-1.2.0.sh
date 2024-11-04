@@ -465,7 +465,7 @@ if [[ -n "$BASH_VERSION" ]] ; then
     else
       while [[ ${#lc_hashconvert2key_string} -gt 0 ]] ; do
         lc_hashconvert2key_char="${lc_hashconvert2key_string%"${lc_hashconvert2key_string#?}"}"
-        if [[ "${lc_hashconvert2key_char}" = [[:alnum:]] ]] ; then
+        if [[ "${lc_hashconvert2key_char}" = [[:digit:]abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ] ]] ; then
           if ${lc_hashconvert2key_forcelower} && [[ "${lc_hashconvert2key_char}" = [[:alpha:]] ]] ; then
             printf -v lc_hashconvert2key_char %o $((36#${lc_hashconvert2key_char}+87))
             lc_hashconvert2key_key="${lc_hashconvert2key_key}$(echo -ne "\\0${lc_hashconvert2key_char}")"

@@ -88,7 +88,7 @@ shopt -s extglob
 function include {
   typeset _include
   _include="${1%.sclass}"
-  isfnset ${_include}.constructor && return 0
+  isfnset ${_include##*/}.constructor && return 0
   if [[ -n "${_include##*/*}" ]] ; then
     . "${gl_objectshbase%/}/sclass/${_include}.sclass"
   else
